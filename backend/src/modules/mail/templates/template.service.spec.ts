@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as Handlebars from 'handlebars';
 import { TemplateService } from './template.service';
+import { MailTemplate } from '@common/constants/mail.constants';
 
 jest.mock('fs');
 
@@ -47,6 +48,21 @@ describe('TemplateService', () => {
     expect(calledPath).toMatch(/welcome\.mjml\.hbs$/);
     expect(calledPath).toMatch(/templates[/\\]email[/\\]welcome\.mjml\.hbs$/);
   });
+
+  it.each(Object.values(MailTemplate))(
+    'resolves the "%s" template to a file that exists, independent of cwd',
+    (template) => {
+      service.render(template, {});
+
+      const [calledPath] = (fs.readFileSync as jest.Mock).mock.calls[0] as [
+        string,
+        string,
+      ];
+      // fs is mocked above; check the real filesystem
+      const realFs = jest.requireActual<typeof fs>('fs');
+      expect(realFs.existsSync(calledPath)).toBe(true);
+    },
+  );
 
   it('caches the compiled template on repeated calls', () => {
     service.render('welcome', { name: 'John' });
