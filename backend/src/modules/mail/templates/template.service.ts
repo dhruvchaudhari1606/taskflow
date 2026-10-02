@@ -29,9 +29,13 @@ export class TemplateService {
       return this.templateCache.get(template)!;
     }
 
+    // Resolve relative to this file, not process.cwd(): templates live in
+    // src/templates/email during development and are copied to
+    // dist/src/templates/email by the Nest build (see nest-cli.json assets),
+    // so the same relative path works in both — including the Docker image.
     const templatePath = path.join(
-      process.cwd(),
-      'src/templates/email',
+      __dirname,
+      '../../../templates/email',
       `${template}.mjml.hbs`,
     );
 
