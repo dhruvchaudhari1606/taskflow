@@ -1,0 +1,105 @@
+# ==============================================================================
+# TaskFlow — full-stack local environment
+#
+#   docker compose up -d --build
+#
+# Frontend: http://localhost:3000   API: http://localhost:4000/api/v1
+# Swagger:  http://localhost:4000/api/docs
+#
+# Defaults below are for LOCAL DEMO USE ONLY. Override any of them by exporting
+# the variable (or a root .env file) and never reuse them in a real deployment.
+# ==============================================================================
+
+name: taskflow
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: taskflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-taskflow}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    # Not published to the host by default (avoids clashing with a local
+    # PostgreSQL install). Uncomment to connect from a GUI client:
+    # ports:
+    #   - "127.0.0.1:5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: taskflow-redis
+    restart: unless-stopped
+    # ports:
+    #   - "127.0.0.1:6380:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: taskflow-backend
+    restart: unless-stopped
+    init: true
+    environment:
+      APP_PORT: 4000
+      APP_ENV: production
+      NODE_ENV: production
+      CORS_ORIGIN: http://localhost:3000,http://127.0.0.1:3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-taskflow}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-local-demo-only-jwt-secret-change-me-0000000000}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-local-demo-only-access-secret-change-me-000000}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-local-demo-only-refresh-secret-change-me-00000}
+      # The stack is served over plain http://localhost, so cookies must not
+      # require HTTPS here. Set to true behind TLS in a real deployment.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      MAIL_PROVIDER: ${MAIL_PROVIDER:-nodemailer}
+      # Migrations always run on start; demo data is loaded idempotently.
+      RUN_MIGRATIONS: "true"
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@taskflow.local}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-Admin@12345}
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Inlined into the browser bundle, so it must be reachable from the host
+        NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+        NEXT_PUBLIC_APP_URL: http://localhost:3000
+    container_name: taskflow-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

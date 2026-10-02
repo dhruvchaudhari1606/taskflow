@@ -1,0 +1,54 @@
+<mjml>
+	<mj-head>
+		<mj-attributes>
+			<mj-all font-family='Segoe UI, Arial, sans-serif' />
+			<mj-text color='#0f172a' line-height='1.65' font-size='15px' />
+			<mj-button background-color='#4F46E5' color='#ffffff' font-size='15px' font-weight='700' border-radius='10px' />
+		</mj-attributes>
+	</mj-head>
+	<mj-body background-color='#f1f5f9'>
+		<mj-wrapper padding='22px 12px'>
+			<mj-section background-color='#111827' border-radius='20px 20px 0 0' padding='30px 28px 20px'>
+				<mj-column>
+					<mj-text font-size='12px' letter-spacing='1px' color='#818cf8' text-transform='uppercase' font-weight='700' padding='0 0 10px 0'>
+						Workspace Invitation
+					</mj-text>
+					<mj-text font-size='26px' color='#f8fafc' font-weight='700' line-height='1.25' padding='0'>
+						Join {{workspaceName}} on TaskFlow
+					</mj-text>
+					<mj-text color='#cbd5e1' padding='14px 0 0 0'>
+						{{inviterName}} has invited you to collaborate on <strong>{{workspaceName}}</strong>. Accept the invitation below to get started.
+					</mj-text>
+				</mj-column>
+			</mj-section>
+
+			<mj-section background-color='#ffffff' border-radius='0 0 20px 20px' padding='0 28px 28px'>
+				<mj-column>
+					<mj-text font-size='14px' color='#475569' padding='24px 0 16px 0'>
+						Click the button below to complete your setup and join your team. Your invited email is already registered and locked to this invitation.
+					</mj-text>
+
+					<mj-button href='{{inviteLink}}' align='left' padding='4px 0 20px 0'>
+						Accept Invitation & Join Workspace
+					</mj-button>
+
+					<mj-divider border-color='#e2e8f0' border-width='1px' padding='12px 0 16px 0' />
+
+					<mj-text font-size='12px' color='#64748b' padding='0 0 6px 0'>
+						Or copy and paste this URL into your browser:
+					</mj-text>
+
+					<mj-text font-size='13px' color='#0f172a' padding='0 0 20px 0'>
+						<a href='{{inviteLink}}' style='color:#4F46E5; word-break:break-all;'>{{inviteLink}}</a>
+					</mj-text>
+
+					<mj-divider border-color='#e2e8f0' border-width='1px' padding='12px 0' />
+
+					<mj-text font-size='12px' color='#94a3b8' padding='0'>
+						This invitation link will expire in 7 days. If you did not expect this invitation, you can safely ignore this email.
+					</mj-text>
+				</mj-column>
+			</mj-section>
+		</mj-wrapper>
+	</mj-body>
+</mjml>

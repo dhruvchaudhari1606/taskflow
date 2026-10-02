@@ -1,0 +1,17 @@
+node_modules
+.next
+out
+coverage
+.git
+.gitignore
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env*
+.vscode
+.idea
+*.tsbuildinfo
+next-env.d.ts
+*.md
+Dockerfile
+.dockerignore

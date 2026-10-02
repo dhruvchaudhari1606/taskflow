@@ -1,0 +1,68 @@
+<mjml>
+	<mj-head>
+		<mj-attributes>
+			<mj-all font-family='Segoe UI, Arial, sans-serif' />
+			<mj-text color='#0f172a' line-height='1.65' font-size='15px' />
+			<mj-button background-color='#4F46E5' color='#ffffff' font-size='15px' font-weight='700' border-radius='10px' />
+		</mj-attributes>
+	</mj-head>
+	<mj-body background-color='#f1f5f9'>
+		<mj-wrapper padding='22px 12px'>
+			<mj-section background-color='#111827' border-radius='20px 20px 0 0' padding='30px 28px 20px'>
+				<mj-column>
+					<mj-text font-size='12px' letter-spacing='1px' color='#93c5fd' text-transform='uppercase' font-weight='700' padding='0 0 10px 0'>
+						{{t 'mail.verify_email_subtitle'}}
+					</mj-text>
+					<mj-text font-size='26px' color='#f8fafc' font-weight='700' line-height='1.25' padding='0'>
+						{{t 'mail.verify_email_title'}}
+					</mj-text>
+					<mj-text color='#cbd5e1' padding='14px 0 0 0'>
+						{{t 'mail.verify_email_message' name=name expiresInHours=expiresInHours}}
+					</mj-text>
+				</mj-column>
+			</mj-section>
+
+			<mj-section background-color='#ffffff' border-radius='0 0 20px 20px' padding='0 28px 28px'>
+				<mj-column>
+					<mj-text font-size='12px' font-weight='700' color='#64748b' text-transform='uppercase' letter-spacing='1px' padding='24px 0 8px 0'>
+						Your 6-Digit Verification Code
+					</mj-text>
+
+					<mj-text align='center' padding='12px 0 16px 0'>
+						<div style='background-color:#f8fafc; border:2px dashed #4F46E5; border-radius:12px; padding:16px 24px; display:inline-block; font-family:monospace, "Segoe UI", sans-serif; font-size:36px; font-weight:800; letter-spacing:8px; color:#4F46E5;'>
+							{{otp}}
+						</div>
+					</mj-text>
+
+					<mj-text font-size='14px' color='#475569' align='center' padding='0 0 20px 0'>
+						Enter this 6-digit code on the registration screen to activate your account.
+					</mj-text>
+
+					<mj-divider border-color='#e2e8f0' border-width='1px' padding='12px 0 20px 0' />
+
+					<mj-text font-size='13px' color='#64748b' padding='0 0 8px 0'>
+						Alternatively, you can verify your email directly by clicking below:
+					</mj-text>
+
+					<mj-button href='{{verificationLink}}' align='left' padding='4px 0 16px 0'>
+						{{t 'mail.verify_email_button'}}
+					</mj-button>
+
+					<mj-text font-size='12px' color='#64748b' padding='0 0 8px 0'>
+						{{t 'mail.verify_email_link_fallback'}}
+					</mj-text>
+
+					<mj-text font-size='13px' color='#0f172a' padding='0 0 20px 0'>
+						<a href='{{verificationLink}}' style='color:#2563eb; word-break:break-all;'>{{verificationLink}}</a>
+					</mj-text>
+
+					<mj-divider border-color='#e2e8f0' border-width='1px' padding='16px 0' />
+
+					<mj-text font-size='12px' color='#94a3b8' padding='0'>
+						{{t 'mail.verify_email_footer'}}
+					</mj-text>
+				</mj-column>
+			</mj-section>
+		</mj-wrapper>
+	</mj-body>
+</mjml>
