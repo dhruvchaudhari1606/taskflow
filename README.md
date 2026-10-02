@@ -126,17 +126,18 @@ echo "NEXT_PUBLIC_APP_URL=http://localhost:3000"       >> .env.local
 npm run dev
 ```
 
-## Deploying to Render
+## Deployment
 
-Both apps deploy as Docker web services, and PostgreSQL can be any managed provider (for example [Neon](https://neon.tech)). In production, the frontend proxies `/api/*` to the backend. This keeps auth cookies first-party even though the two services run on different `*.onrender.com` domains.
+The reference setup is the **backend on [Render](https://render.com)** (Docker), the **frontend on [Vercel](https://vercel.com)** and **PostgreSQL on [Neon](https://neon.tech)**. In production, the frontend proxies `/api/*` to the backend. This keeps auth cookies first-party even though the two apps run on different domains.
 
-**1. Backend** — *New → Web Service*, connect the repo, then set:
+**1. Backend on Render** — *New → Web Service*, connect the repo, then set:
 
 | Setting | Value |
 | :-- | :-- |
 | Language | Docker |
 | Root Directory | `backend` |
-| Dockerfile Path | `./Dockerfile` |
+| Dockerfile Path | `backend/Dockerfile` |
+| Docker Build Context | `backend/` |
 | Health Check Path | `/api/v1/health` |
 
 Environment variables:
@@ -147,7 +148,7 @@ APP_PORT=4000
 APP_ENV=production
 NODE_ENV=production
 TRUST_PROXY=loopback,linklocal,uniquelocal
-CORS_ORIGIN=https://<frontend>.onrender.com
+CORS_ORIGIN=https://<your-app>.vercel.app
 DB_HOST=<neon-host>            # use the direct (non-pooled) host
 DB_PORT=5432
 DB_USER=<user>
@@ -165,13 +166,15 @@ SEED_ADMIN_PASSWORD=<strong password>
 
 Migrations run automatically every time the container starts.
 
-**2. Frontend** — another Docker web service with Root Directory `frontend`, Dockerfile Path `./Dockerfile` and Health Check Path `/`. These values are compiled into the build, so redeploy the frontend whenever they change:
+**2. Frontend on Vercel** — import the repo, set **Root Directory** to `frontend` (Vercel detects Next.js), and add these environment variables. They are compiled into the build, so redeploy whenever they change:
 
 ```env
-NEXT_PUBLIC_API_URL=https://<frontend>.onrender.com/api/v1
-NEXT_PUBLIC_APP_URL=https://<frontend>.onrender.com
+NEXT_PUBLIC_API_URL=https://<your-app>.vercel.app/api/v1
+NEXT_PUBLIC_APP_URL=https://<your-app>.vercel.app
 API_PROXY_TARGET=https://<backend>.onrender.com
 ```
+
+The frontend can also run as a Docker web service from [`frontend/Dockerfile`](frontend/Dockerfile), using the same variables.
 
 ## Quality checks & CI
 
