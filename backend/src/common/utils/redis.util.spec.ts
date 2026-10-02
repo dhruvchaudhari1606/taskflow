@@ -39,6 +39,22 @@ describe('redis.util', () => {
     });
   });
 
+  describe('getRedisOptions TLS', () => {
+    it('enables TLS for managed Redis providers when configured', () => {
+      (configService.get as jest.Mock).mockReturnValue({
+        host: 'redis.example.com',
+        port: 6380,
+        tls: true,
+      });
+
+      expect(getRedisOptions(configService)).toEqual({
+        host: 'redis.example.com',
+        port: 6380,
+        tls: {},
+      });
+    });
+  });
+
   describe('createRedisConnection', () => {
     it('creates a Redis instance using options from ConfigService', () => {
       const redisConfig = { host: 'localhost', port: 6379 };

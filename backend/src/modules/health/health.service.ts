@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { createRedisConnection } from '@common/utils/redis.util';
+import {
+  createRedisConnection,
+  isRedisEnabled,
+} from '@common/utils/redis.util';
 import { LoggerService } from '@common/logger/logger.service';
 
 export interface DependencyHealth {
-  status: 'up' | 'down';
+  status: 'up' | 'down' | 'disabled';
   message?: string;
 }
 
@@ -33,7 +36,7 @@ export class HealthService {
     ]);
 
     const status =
-      database.status === 'up' && redis.status === 'up' ? 'ok' : 'degraded';
+      database.status === 'up' && redis.status !== 'down' ? 'ok' : 'degraded';
 
     return {
       status,
@@ -60,6 +63,10 @@ export class HealthService {
   }
 
   private async checkRedis(): Promise<DependencyHealth> {
+    if (!isRedisEnabled(this.configService)) {
+      return { status: 'disabled' };
+    }
+
     const redis = createRedisConnection(this.configService);
 
     try {

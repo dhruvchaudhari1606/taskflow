@@ -59,6 +59,7 @@ describe('configuration', () => {
         username: 'postgres',
         password: 'secret',
         name: 'taskflow_staging',
+        ssl: false,
       },
       jwt: {
         secret: 'jwt-secret',
@@ -93,6 +94,8 @@ describe('configuration', () => {
         rateLimitLimit: 200,
       },
       redis: {
+        enabled: true,
+        tls: false,
         host: 'redis-host',
         port: 6379,
         password: 'redis-password',

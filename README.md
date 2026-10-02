@@ -126,6 +126,56 @@ echo "NEXT_PUBLIC_APP_URL=http://localhost:3000"       >> .env.local
 npm run dev
 ```
 
+## Deployment
+
+The reference setup is the **backend on [Render](https://render.com)** (Docker), the **frontend on [Vercel](https://vercel.com)** and **PostgreSQL on [Neon](https://neon.tech)**. In production, the frontend proxies `/api/*` to the backend. This keeps auth cookies first-party even though the two apps run on different domains.
+
+**1. Backend on Render** — *New → Web Service*, connect the repo, then set:
+
+| Setting | Value |
+| :-- | :-- |
+| Language | Docker |
+| Root Directory | `backend` |
+| Dockerfile Path | `backend/Dockerfile` |
+| Docker Build Context | `backend/` |
+| Health Check Path | `/api/v1/health` |
+
+Environment variables:
+
+```env
+PORT=4000
+APP_PORT=4000
+APP_ENV=production
+NODE_ENV=production
+TRUST_PROXY=loopback,linklocal,uniquelocal
+CORS_ORIGIN=https://<your-app>.vercel.app
+DB_HOST=<neon-host>            # use the direct (non-pooled) host
+DB_PORT=5432
+DB_USER=<user>
+DB_PASSWORD=<password>
+DB_NAME=<database>
+DB_SSL=true
+REDIS_ENABLED=false            # or point REDIS_HOST/PORT at a Render Key Value instance
+JWT_SECRET=<random 64+ chars>
+JWT_ACCESS_SECRET=<random 64+ chars>
+JWT_REFRESH_SECRET=<random 64+ chars>
+SEED_DEMO_DATA=true            # loads the demo workspace (idempotent)
+SEED_ADMIN_EMAIL=<admin email>
+SEED_ADMIN_PASSWORD=<strong password>
+```
+
+Migrations run automatically every time the container starts.
+
+**2. Frontend on Vercel** — import the repo, set **Root Directory** to `frontend` (Vercel detects Next.js), and add these environment variables. They are compiled into the build, so redeploy whenever they change:
+
+```env
+NEXT_PUBLIC_API_URL=https://<your-app>.vercel.app/api/v1
+NEXT_PUBLIC_APP_URL=https://<your-app>.vercel.app
+API_PROXY_TARGET=https://<backend>.onrender.com
+```
+
+The frontend can also run as a Docker web service from [`frontend/Dockerfile`](frontend/Dockerfile), using the same variables.
+
 ## Quality checks & CI
 
 Every push and pull request to `main` runs the [CI workflow](.github/workflows/ci.yml):
