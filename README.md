@@ -135,7 +135,7 @@ Every push and pull request to `main` runs the [CI workflow](.github/workflows/c
 | **Backend** | ESLint, `tsc --noEmit`, Jest unit tests with coverage, e2e tests, production build |
 | **Frontend** | ESLint, `tsc --noEmit`, Next.js production build |
 | **Docker** | Builds both images and starts the full Compose stack. Checks that the API health endpoint responds, that a demo login succeeds (proving migrations and seed ran), and that the web app is served |
-| **Dependency audit** | `npm audit` for high/critical advisories (informational) |
+| **Dependency audit** | `npm audit` on production dependencies; fails on critical advisories |
 
 Run the same checks locally:
 

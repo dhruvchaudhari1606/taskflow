@@ -116,13 +116,13 @@ jobs:
         run: docker compose down --volumes
 
   dependency-audit:
-    name: Dependency audit (informational)
+    name: Dependency audit (critical)
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Surfaces high/critical advisories without blocking on upstream
-    # transitive issues that have no fix available yet.
-    continue-on-error: true
+    # Fails only on critical advisories in production dependencies;
+    # lower-severity findings are still listed in the job log for review.
     strategy:
+      fail-fast: false
       matrix:
         app: [backend, frontend]
     defaults:
@@ -134,4 +134,4 @@ jobs:
         with:
           node-version: 22
       - name: npm audit (${{ matrix.app }})
-        run: npm audit --omit=dev --audit-level=high
+        run: npm audit --omit=dev --audit-level=critical
