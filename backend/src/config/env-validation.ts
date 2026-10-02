@@ -17,8 +17,11 @@ export const envValidationSchema: Joi.ObjectSchema<Record<string, unknown>> =
     DB_USER: Joi.string().required(),
     DB_PASSWORD: Joi.string().allow('').default(''),
     DB_NAME: Joi.string().required(),
+    DB_SSL: Joi.boolean().default(false),
 
     // REDIS
+    REDIS_ENABLED: Joi.boolean().default(true),
+    REDIS_TLS: Joi.boolean().default(false),
     REDIS_HOST: Joi.string().default('localhost'),
     REDIS_PORT: Joi.number().port().default(6379),
     REDIS_PASSWORD: Joi.string().allow('').optional(),

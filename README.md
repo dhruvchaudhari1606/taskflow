@@ -126,6 +126,53 @@ echo "NEXT_PUBLIC_APP_URL=http://localhost:3000"       >> .env.local
 npm run dev
 ```
 
+## Deploying to Render
+
+Both apps deploy as Docker web services, and PostgreSQL can be any managed provider (for example [Neon](https://neon.tech)). In production, the frontend proxies `/api/*` to the backend. This keeps auth cookies first-party even though the two services run on different `*.onrender.com` domains.
+
+**1. Backend** — *New → Web Service*, connect the repo, then set:
+
+| Setting | Value |
+| :-- | :-- |
+| Language | Docker |
+| Root Directory | `backend` |
+| Dockerfile Path | `./Dockerfile` |
+| Health Check Path | `/api/v1/health` |
+
+Environment variables:
+
+```env
+PORT=4000
+APP_PORT=4000
+APP_ENV=production
+NODE_ENV=production
+TRUST_PROXY=loopback,linklocal,uniquelocal
+CORS_ORIGIN=https://<frontend>.onrender.com
+DB_HOST=<neon-host>            # use the direct (non-pooled) host
+DB_PORT=5432
+DB_USER=<user>
+DB_PASSWORD=<password>
+DB_NAME=<database>
+DB_SSL=true
+REDIS_ENABLED=false            # or point REDIS_HOST/PORT at a Render Key Value instance
+JWT_SECRET=<random 64+ chars>
+JWT_ACCESS_SECRET=<random 64+ chars>
+JWT_REFRESH_SECRET=<random 64+ chars>
+SEED_DEMO_DATA=true            # loads the demo workspace (idempotent)
+SEED_ADMIN_EMAIL=<admin email>
+SEED_ADMIN_PASSWORD=<strong password>
+```
+
+Migrations run automatically every time the container starts.
+
+**2. Frontend** — another Docker web service with Root Directory `frontend`, Dockerfile Path `./Dockerfile` and Health Check Path `/`. These values are compiled into the build, so redeploy the frontend whenever they change:
+
+```env
+NEXT_PUBLIC_API_URL=https://<frontend>.onrender.com/api/v1
+NEXT_PUBLIC_APP_URL=https://<frontend>.onrender.com
+API_PROXY_TARGET=https://<backend>.onrender.com
+```
+
 ## Quality checks & CI
 
 Every push and pull request to `main` runs the [CI workflow](.github/workflows/ci.yml):

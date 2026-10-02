@@ -240,8 +240,8 @@ Configuration is loaded from `.env.<NODE_ENV>` and validated at startup with Joi
 | Group | Variables |
 | :-- | :-- |
 | App | `APP_PORT`, `APP_ENV`, `TRUST_PROXY`, `CORS_ORIGIN` |
-| Database | `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` |
-| Redis | `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB`, `REDIS_KEY_PREFIX` |
+| Database | `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SSL` (set `true` for Neon or other managed Postgres) |
+| Redis | `REDIS_ENABLED`, `REDIS_TLS`, `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB`, `REDIS_KEY_PREFIX` |
 | JWT | `JWT_SECRET`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_*_EXPIRES_IN` |
 | Cookies | `COOKIE_SECURE`, `COOKIE_SAME_SITE`, `COOKIE_DOMAIN`, `COOKIE_ACCESS_NAME`, `COOKIE_REFRESH_NAME` |
 | Mail | `MAIL_PROVIDER` (`nodemailer` · `sendgrid` · `google`) plus provider credentials |

@@ -24,8 +24,11 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
 # so they must be provided as build args rather than runtime env vars.
 ARG NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1
 ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+# Optional: backend origin to proxy /api/* to (see next.config.ts)
+ARG API_PROXY_TARGET=
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
-    NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+    NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
+    API_PROXY_TARGET=$API_PROXY_TARGET
 
 RUN npm run build
 

@@ -86,4 +86,16 @@ describe('HealthService', () => {
       HealthService.name,
     );
   });
+
+  it('skips the Redis probe and stays ok when Redis is disabled', async () => {
+    (configService.get as jest.Mock).mockImplementation((key: string) =>
+      key === 'redis.enabled' ? false : undefined,
+    );
+
+    const result = await service.check();
+
+    expect(result.status).toBe('ok');
+    expect(result.checks.redis).toEqual({ status: 'disabled' });
+    expect(redisUtil.createRedisConnection).not.toHaveBeenCalled();
+  });
 });

@@ -11,6 +11,10 @@ export const getDatabaseConfig = (
   username: configService.get<string>('database.username'),
   password: configService.get<string>('database.password'),
   database: configService.get<string>('database.name'),
+  // Verify the server certificate (Neon and similar use publicly trusted CAs)
+  ssl: configService.get<boolean>('database.ssl')
+    ? { rejectUnauthorized: true }
+    : false,
 
   entities: [__dirname + '/../database/entities/*.entity{.ts,.js}'],
 

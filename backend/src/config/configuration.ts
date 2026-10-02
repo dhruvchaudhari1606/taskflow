@@ -15,9 +15,14 @@ export default () => ({
     username: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     name: process.env.DB_NAME,
+    // Required by managed Postgres providers such as Neon
+    ssl: process.env.DB_SSL === 'true',
   },
 
   redis: {
+    // Redis currently backs only the health probe; disable it where none is provisioned
+    enabled: process.env.REDIS_ENABLED !== 'false',
+    tls: process.env.REDIS_TLS === 'true',
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
     password: process.env.REDIS_PASSWORD || undefined,
