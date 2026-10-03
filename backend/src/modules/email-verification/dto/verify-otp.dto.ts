@@ -12,7 +12,7 @@ import {
 export class VerifyOtpDto {
   @ApiProperty({
     description: 'User email address',
-    example: 'alex@brightlabs.com',
+    example: 'alex.rivera@taskflow.test',
   })
   @IsEmail()
   @Transform(({ value }: { value: unknown }) =>

@@ -41,4 +41,8 @@ export const swaggerConfig = new DocumentBuilder()
   .addTag('Users', 'User Profile & Identity')
   .addTag('Authorization', 'Role Management & Dynamic Permission Assignment')
   .addTag('Health', 'Service Health & Infrastructure Monitoring')
+  .addTag('Workspaces', 'Multi-tenant Workspaces, Members & Invitations')
+  .addTag('Projects', 'Projects, Delivery Health & Completion Rates')
+  .addTag('Project Columns', 'Kanban Board Columns & Ordering')
+  .addTag('Tasks', 'Tasks, Kanban Reordering & Discussion Comments')
   .build();

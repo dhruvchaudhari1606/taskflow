@@ -4,59 +4,50 @@ import React, { useMemo, useState } from "react";
 import { useHydrated } from "@/hooks/use-hydrated";
 import Link from "next/link";
 import {
-  Sparkles,
   CheckCircle2,
   Clock,
-  TrendingUp,
   Users,
   FolderKanban,
   ArrowRight,
   Plus,
   Flame,
-  AlertCircle,
-  MoreVertical,
   CheckSquare,
   PieChart as PieChartIcon,
   Activity,
-  MessageSquare,
 } from "lucide-react";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
+import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/common/avatar";
 import {
   MOCK_PROJECTS,
   MOCK_TASKS,
   MOCK_ACTIVITY,
-  MOCK_WORKSPACE,
   MOCK_USERS,
 } from "@/lib/mock-data";
 import { ROUTES } from "@/constants/routes";
 import {
   useWorkspaces,
-  useWorkspaceDetails,
+  useWorkspaceMemberOptions,
 } from "@/features/workspace/hooks/use-workspaces";
 import { useProjects } from "@/features/projects/hooks/use-projects";
+import { pickFeaturedProject } from "@/features/projects/utils";
 import { useWorkspaceTasks } from "@/features/tasks/hooks/use-tasks";
 import { Priority, TaskStatus } from "@/types/common";
 import { TaskDetailModal } from "@/features/tasks/components/task-detail-modal";
-import { cn } from "@/lib/utils";
+import { formatRelativeTime, truncate } from "@/lib/utils";
+import { TeamWorkloadChart } from "@/features/dashboard/components/team-workload-chart";
+import {
+  TASK_STATUS_SERIES,
+  statusSeries,
+  type TaskStatusKey,
+} from "@/features/dashboard/task-status-series";
 
-const STATUS_COLORS: Record<string, string> = {
-  [TaskStatus.TODO]: "#64748b",
-  [TaskStatus.IN_PROGRESS]: "#0051d5",
-  [TaskStatus.IN_REVIEW]: "#d97706",
-  [TaskStatus.DONE]: "#059669",
+// Lower rank sorts first in "Sprint Priority Tasks"
+const PRIORITY_RANK: Record<Priority, number> = {
+  [Priority.URGENT]: 0,
+  [Priority.HIGH]: 1,
+  [Priority.MEDIUM]: 2,
+  [Priority.LOW]: 3,
 };
 
 export default function DashboardPage() {
@@ -65,12 +56,17 @@ export default function DashboardPage() {
 
   const { activeWorkspace } = useWorkspaces();
   const { data: serverProjects } = useProjects(activeWorkspace?.id);
-  const { data: workspaceData } = useWorkspaceDetails(activeWorkspace?.id);
   const { data: serverTasks } = useWorkspaceTasks(activeWorkspace?.id);
+  const memberOptions = useWorkspaceMemberOptions(activeWorkspace?.id);
 
   const [selectedTask, setSelectedTask] = useState<any>(null);
 
-  // Fallback or live projects
+  // The offline demo session (lib/auth/demo-auth) uses a mock workspace id
+  // ("ws-…"). Only then is mock data shown; real workspaces show real data,
+  // including empty states, never placeholder numbers.
+  const isDemoWorkspace = Boolean(activeWorkspace?.id?.startsWith("ws-"));
+
+  // Live projects
   const displayProjects = useMemo(() => {
     if (serverProjects && serverProjects.length > 0) {
       return serverProjects.map((sp) => ({
@@ -86,13 +82,11 @@ export default function DashboardPage() {
     return [];
   }, [serverProjects]);
 
-  // Fallback or live tasks
-  const tasks = useMemo(() => {
-    if (serverTasks && serverTasks.length > 0) {
-      return serverTasks;
-    }
-    return MOCK_TASKS;
-  }, [serverTasks]);
+  // Live tasks (mock tasks only for the offline demo workspace)
+  const tasks = useMemo(
+    () => (isDemoWorkspace ? MOCK_TASKS : serverTasks ?? []),
+    [isDemoWorkspace, serverTasks]
+  );
 
   // Derived task counts
   const totalTasks = tasks.length;
@@ -104,123 +98,47 @@ export default function DashboardPage() {
   const todoTasks = tasks.filter((t) => t.status === TaskStatus.TODO);
 
   const completionPercent =
-    totalTasks > 0 ? Math.round((doneTasks.length / totalTasks) * 100) : 78;
+    totalTasks > 0 ? Math.round((doneTasks.length / totalTasks) * 100) : 0;
 
   // Workspace team members count
-  const memberCount =
-    workspaceData?.members && workspaceData.members.length > 0
-      ? workspaceData.members.length
-      : 5;
+  const memberCount = isDemoWorkspace ? MOCK_USERS.length : memberOptions.length;
 
-  const workspaceName = activeWorkspace?.name || MOCK_WORKSPACE.name;
-  const primaryProjectId = displayProjects[0]?.id || "proj-1";
+  const workspaceName = activeWorkspace?.name || "Your workspace";
+  // "Go to Sprint Board" opens the busiest project; undefined until projects load
+  const primaryProjectId = isDemoWorkspace
+    ? MOCK_PROJECTS[0]?.id
+    : pickFeaturedProject(displayProjects)?.id;
+
+  // Priority list: open work first, most urgent first
+  const priorityTasks = useMemo(
+    () =>
+      [...tasks]
+        .sort(
+          (a, b) =>
+            Number(a.status === TaskStatus.DONE) -
+              Number(b.status === TaskStatus.DONE) ||
+            PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]
+        )
+        .slice(0, 5),
+    [tasks]
+  );
 
   // Task Status Distribution for Donut Chart
-  const statusDistribution = useMemo(() => {
-    return [
-      { name: "Backlog", value: todoTasks.length, color: "#64748b" },
-      {
-        name: "In Progress",
-        value: inProgressTasks.length,
-        color: "#0051d5",
-      },
-      { name: "In Review", value: inReviewTasks.length, color: "#d97706" },
-      { name: "Done", value: doneTasks.length, color: "#059669" },
-    ].filter((item) => item.value > 0);
-  }, [todoTasks.length, inProgressTasks.length, inReviewTasks.length, doneTasks.length]);
+  const statusCounts: Record<TaskStatusKey, number> = {
+    todo: todoTasks.length,
+    inProgress: inProgressTasks.length,
+    inReview: inReviewTasks.length,
+    done: doneTasks.length,
+  };
+  const statusDistribution = TASK_STATUS_SERIES.map((s) => ({
+    name: s.label,
+    value: statusCounts[s.key],
+    color: s.color,
+  })).filter((item) => item.value > 0);
 
-  // Velocity / Burn-Up Chart Data computed relative to real task counts
-  const velocityChartData = useMemo(() => {
-    const plannedTarget = Math.max(totalTasks, 12);
-    const completedCurrent = doneTasks.length;
-    return [
-      {
-        day: "Mon",
-        planned: Math.round(plannedTarget * 0.4),
-        completed: Math.max(0, Math.round(completedCurrent * 0.2)),
-      },
-      {
-        day: "Tue",
-        planned: Math.round(plannedTarget * 0.55),
-        completed: Math.max(1, Math.round(completedCurrent * 0.4)),
-      },
-      {
-        day: "Wed",
-        planned: Math.round(plannedTarget * 0.7),
-        completed: Math.max(1, Math.round(completedCurrent * 0.6)),
-      },
-      {
-        day: "Thu",
-        planned: Math.round(plannedTarget * 0.82),
-        completed: Math.max(2, Math.round(completedCurrent * 0.75)),
-      },
-      {
-        day: "Fri",
-        planned: Math.round(plannedTarget * 0.92),
-        completed: Math.max(2, Math.round(completedCurrent * 0.85)),
-      },
-      {
-        day: "Sat",
-        planned: plannedTarget,
-        completed: Math.max(2, Math.round(completedCurrent * 0.95)),
-      },
-      { day: "Sun", planned: plannedTarget, completed: completedCurrent },
-    ];
-  }, [totalTasks, doneTasks.length]);
-
-  // Live Activity Stream synthesized from tasks and comments
+  // Live activity from real comments and task updates, newest first
   const liveActivity = useMemo(() => {
-    const events: Array<{
-      id: string;
-      user: { name: string; avatarUrl?: string | null };
-      message: string;
-      time: string;
-    }> = [];
-
-    // Synthesize comments activity
-    tasks.forEach((t) => {
-      if ((t as any).comments && Array.isArray((t as any).comments)) {
-        (t as any).comments.forEach((c: any) => {
-          events.push({
-            id: `comm-${c.id}`,
-            user: {
-              name: c.user?.name || "Team Member",
-              avatarUrl: c.user?.avatar_url || null,
-            },
-            message: `commented on "${t.title}": "${c.content.slice(0, 45)}${
-              c.content.length > 45 ? "..." : ""
-            }"`,
-            time: "Just now",
-          });
-        });
-      }
-    });
-
-    // Synthesize task status activity
-    tasks.slice(0, 4).forEach((t, idx) => {
-      const author = t.assignee || t.createdBy || MOCK_USERS[idx % MOCK_USERS.length];
-      const action =
-        t.status === TaskStatus.DONE
-          ? "completed task"
-          : t.status === TaskStatus.IN_PROGRESS
-          ? "started progress on"
-          : t.status === TaskStatus.IN_REVIEW
-          ? "requested review for"
-          : "created task";
-
-      events.push({
-        id: `act-${t.id}`,
-        user: {
-          name: author?.name || "Team Member",
-          avatarUrl: author?.avatarUrl || null,
-        },
-        message: `${action} "${t.title}"`,
-        time: idx === 0 ? "10m ago" : idx === 1 ? "1h ago" : "3h ago",
-      });
-    });
-
-    // If still empty or demo, blend with MOCK_ACTIVITY
-    if (events.length === 0) {
+    if (isDemoWorkspace) {
       return MOCK_ACTIVITY.map((a) => ({
         id: a.id,
         user: a.user,
@@ -229,8 +147,45 @@ export default function DashboardPage() {
       }));
     }
 
-    return events.slice(0, 6);
-  }, [tasks]);
+    const events: Array<{
+      id: string;
+      user: { name: string; avatarUrl?: string | null };
+      message: string;
+      at: string;
+    }> = [];
+
+    tasks.forEach((t) => {
+      t.comments?.forEach((c) => {
+        events.push({
+          id: `comm-${c.id}`,
+          user: { name: c.author.name, avatarUrl: c.author.avatarUrl ?? null },
+          message: `commented on "${t.title}": "${truncate(c.content, 45)}"`,
+          at: c.createdAt,
+        });
+      });
+
+      const author = t.assignee || t.createdBy;
+      const action =
+        t.status === TaskStatus.DONE
+          ? "completed"
+          : t.status === TaskStatus.IN_PROGRESS
+          ? "is working on"
+          : t.status === TaskStatus.IN_REVIEW
+          ? "requested review for"
+          : "added";
+      events.push({
+        id: `task-${t.id}`,
+        user: { name: author?.name || "Team member", avatarUrl: author?.avatarUrl ?? null },
+        message: `${action} "${t.title}"`,
+        at: t.updatedAt,
+      });
+    });
+
+    return events
+      .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
+      .slice(0, 6)
+      .map(({ at, ...e }) => ({ ...e, time: formatRelativeTime(at) }));
+  }, [isDemoWorkspace, tasks]);
 
   return (
     <div className="space-y-8 pb-12 w-full max-w-7xl mx-auto">
@@ -259,12 +214,23 @@ export default function DashboardPage() {
               <span>All Tasks</span>
             </Button>
           </Link>
-          <Link href={`/projects/${primaryProjectId}`}>
-            <Button className="bg-[#4F46E5] hover:bg-[#3525cd] text-white text-xs font-bold rounded-xl h-10 px-4 shadow-sm flex items-center gap-2">
+          {primaryProjectId ? (
+            <Link href={ROUTES.project(primaryProjectId)}>
+              <Button className="bg-[#4F46E5] hover:bg-[#3525cd] text-white text-xs font-bold rounded-xl h-10 px-4 shadow-sm flex items-center gap-2">
+                <span>Go to Sprint Board</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          ) : (
+            // Projects still loading (or none yet): no link to a placeholder board
+            <Button
+              disabled
+              className="bg-[#4F46E5] text-white text-xs font-bold rounded-xl h-10 px-4 shadow-sm flex items-center gap-2 opacity-60"
+            >
               <span>Go to Sprint Board</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
-          </Link>
+          )}
         </div>
       </div>
 
@@ -420,87 +386,21 @@ export default function DashboardPage() {
 
       {/* Main Grid: Velocity Area Chart & Task Status Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left 8 Cols: Sprint Burn-Up / Velocity Chart */}
+        {/* Left 8 Cols: Team Workload (real tasks per member by status) */}
         <div className="lg:col-span-8 p-6 rounded-2xl bg-white dark:bg-[#1E293B] border border-slate-200/80 dark:border-[#334155] shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">
-                Sprint Burn-Up & Velocity
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
-                Live completed vs target scope based on PostgreSQL task progression
-              </p>
-            </div>
-            <div className="flex items-center gap-4 text-xs font-semibold">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#4F46E5] dark:bg-[#818CF8]" />
-                <span className="text-slate-600 dark:text-[#94A3B8]">Completed</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-[#334155]" />
-                <span className="text-slate-400 dark:text-slate-500">Planned Scope</span>
-              </div>
-            </div>
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">
+              Team Workload
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
+              Tasks assigned to each member, by workflow stage
+            </p>
           </div>
-
-          <div className="h-64 w-full pt-4">
-            {mounted && (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={velocityChartData}>
-                  <defs>
-                    <linearGradient id="completedGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#818CF8" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#818CF8" stopOpacity={0.0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="#334155"
-                    opacity={0.5}
-                  />
-                  <XAxis
-                    dataKey="day"
-                    stroke="#94a3b8"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis
-                    stroke="#94a3b8"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#111827",
-                      color: "#f8fafc",
-                      borderRadius: "12px",
-                      border: "1px solid #334155",
-                      fontSize: "12px",
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="planned"
-                    stroke="#64748b"
-                    strokeDasharray="4 4"
-                    fill="transparent"
-                    strokeWidth={2}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="completed"
-                    stroke="#818CF8"
-                    fillOpacity={1}
-                    fill="url(#completedGrad)"
-                    strokeWidth={3}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </div>
+          <TeamWorkloadChart
+            tasks={tasks}
+            members={isDemoWorkspace ? MOCK_USERS : memberOptions}
+            mounted={mounted}
+          />
         </div>
 
         {/* Right 4 Cols: Status Distribution Donut Chart */}
@@ -527,9 +427,12 @@ export default function DashboardPage() {
                     outerRadius={70}
                     paddingAngle={3}
                     dataKey="value"
+                    // Surface-colored edge instead of Recharts' default white stroke (visible in dark mode)
+                    stroke="var(--chart-surface)"
+                    strokeWidth={2}
                   >
-                    {statusDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    {statusDistribution.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip
@@ -556,30 +459,14 @@ export default function DashboardPage() {
 
           {/* Status Breakdown Legend */}
           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-[#334155]">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#64748b]" />
-              <span className="text-xs text-slate-600 dark:text-slate-300">
-                Backlog: <strong>{todoTasks.length}</strong>
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#0051d5]" />
-              <span className="text-xs text-slate-600 dark:text-slate-300">
-                Progress: <strong>{inProgressTasks.length}</strong>
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#d97706]" />
-              <span className="text-xs text-slate-600 dark:text-slate-300">
-                Review: <strong>{inReviewTasks.length}</strong>
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#059669]" />
-              <span className="text-xs text-slate-600 dark:text-slate-300">
-                Done: <strong>{doneTasks.length}</strong>
-              </span>
-            </div>
+            {TASK_STATUS_SERIES.map((s) => (
+              <div key={s.key} className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: s.color }} />
+                <span className="text-xs text-slate-600 dark:text-slate-300">
+                  {s.label}: <strong>{statusCounts[s.key]}</strong>
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -601,6 +488,11 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-3.5">
+            {liveActivity.length === 0 && (
+              <p className="text-xs text-slate-400 dark:text-[#94A3B8] p-2">
+                No activity yet. Task updates and comments will appear here.
+              </p>
+            )}
             {liveActivity.map((act) => (
               <div
                 key={act.id}
@@ -645,7 +537,12 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-2.5">
-            {tasks.slice(0, 5).map((t) => (
+            {priorityTasks.length === 0 && (
+              <p className="text-xs text-slate-400 dark:text-[#94A3B8] p-2">
+                No tasks yet. Create one from a project board.
+              </p>
+            )}
+            {priorityTasks.map((t) => (
               <div
                 key={t.id}
                 onClick={() => setSelectedTask(t)}
@@ -653,7 +550,7 @@ export default function DashboardPage() {
               >
                 <div className="flex items-center gap-2.5 overflow-hidden">
                   <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-white dark:bg-slate-800 text-slate-500 border border-slate-200/80 dark:border-slate-700 shrink-0">
-                    {t.id.length > 10 ? `#${t.id.slice(0, 6)}` : `#${t.id}`}
+                    {t.key ?? (t.id.length > 10 ? `#${t.id.slice(0, 6)}` : `#${t.id}`)}
                   </span>
                   <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-[#4F46E5] dark:group-hover:text-[#818CF8] transition-colors">
                     {t.title}
@@ -661,19 +558,14 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <span
-                    className={cn(
-                      "px-2 py-0.5 rounded text-[10px] font-bold text-white",
-                      t.status === TaskStatus.DONE
-                        ? "bg-emerald-600"
-                        : t.status === TaskStatus.IN_PROGRESS
-                        ? "bg-blue-600"
-                        : t.status === TaskStatus.IN_REVIEW
-                        ? "bg-amber-600"
-                        : "bg-slate-500"
-                    )}
-                  >
-                    {t.status.replace("_", " ")}
+                  {/* Stage badge: swatch from the shared status ramp + readable text
+                      (light ramp steps can't carry white text, so the color sits in the dot) */}
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-slate-700 dark:text-slate-200">
+                    <span
+                      className="w-2 h-2 rounded-sm"
+                      style={{ backgroundColor: statusSeries(t.status)?.color }}
+                    />
+                    {statusSeries(t.status)?.label ?? t.status}
                   </span>
                 </div>
               </div>
@@ -777,7 +669,7 @@ export default function DashboardPage() {
         task={selectedTask}
         isOpen={!!selectedTask}
         onClose={() => setSelectedTask(null)}
-        members={MOCK_USERS}
+        members={isDemoWorkspace ? MOCK_USERS : memberOptions}
       />
     </div>
   );

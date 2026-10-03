@@ -101,7 +101,7 @@ jobs:
         run: |
           curl --fail --silent --show-error \
             -H "Content-Type: application/json" \
-            -d '{"email":"sarah@northstar.io","password":"password123"}' \
+            -d '{"email":"sarah.mitchell@taskflow.test","password":"password123"}' \
             http://localhost:4000/api/v1/auth/login > /dev/null
 
       - name: Frontend responds

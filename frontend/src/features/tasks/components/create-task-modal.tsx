@@ -18,6 +18,7 @@ import { Avatar } from "@/components/common/avatar";
 import { Task, TaskStatus, Priority } from "@/types/common";
 import { MOCK_USERS, MOCK_CURRENT_USER } from "@/lib/mock-data";
 import { useCreateTask } from "../hooks/use-tasks";
+import { statusFromColumnTitle } from "@/lib/task-status";
 import { useProject } from "@/features/projects/hooks/use-projects";
 import {
   useWorkspaces,
@@ -171,7 +172,7 @@ export function CreateTaskModal({
 
     const targetCol = columns?.find((c) => c.id === status || c.title === status);
     const colId = targetCol ? targetCol.id : undefined;
-    const taskStatus = targetCol ? targetCol.title : status;
+    const taskStatus = targetCol ? statusFromColumnTitle(targetCol.title) : status;
     const effectiveAssigneeId =
       assigneeId && assigneeId !== "unassigned" ? assigneeId : undefined;
 

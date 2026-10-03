@@ -229,6 +229,14 @@
   --chart-4: #0891b2;
   --chart-5: #059669;
 
+  /* Task status ramp (ordinal: To Do → Done gets darker). One hue, validated
+     with the dataviz palette checks against the light card surface. */
+  --chart-surface: #ffffff;
+  --status-todo: #86b6ef;
+  --status-in-progress: #3987e5;
+  --status-in-review: #1c5cab;
+  --status-done: #0d366b;
+
   /* Sidebar */
   --sidebar: #f2f3ff;
   --sidebar-foreground: #131b2e;
@@ -285,6 +293,14 @@
   --chart-3: #a78bfa;
   --chart-4: #22d3ee;
   --chart-5: #4edea3;
+
+  /* Task status ramp, stepped for the dark card surface (#1e293b): To Do is
+     deepest, Done is brightest, so later stages still read as "further along". */
+  --chart-surface: #1e293b;
+  --status-todo: #256abf;
+  --status-in-progress: #3987e5;
+  --status-in-review: #86b6ef;
+  --status-done: #cde2fb;
 
   /* Sidebar */
   --sidebar: #111827;

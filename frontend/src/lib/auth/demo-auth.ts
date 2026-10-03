@@ -5,7 +5,7 @@ import type { User, Workspace } from "@/types/common";
 export const DEMO_USER: User = {
   id: "user-1",
   name: "Sarah Mitchell",
-  email: "sarah@northstar.io",
+  email: "sarah.mitchell@taskflow.test",
   avatarUrl: "/images/sarah-mitchell.jpg",
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),

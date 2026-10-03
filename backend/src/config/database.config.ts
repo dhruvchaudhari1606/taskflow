@@ -3,24 +3,43 @@ import { ConfigService } from '@nestjs/config';
 
 export const getDatabaseConfig = (
   configService: ConfigService,
-): TypeOrmModuleOptions => ({
-  type: 'postgres',
+): TypeOrmModuleOptions => {
+  const url = configService.get<string>('database.url');
+  const host = configService.get<string>('database.host');
+  const ssl = configService.get<boolean>('database.ssl');
+  const rejectUnauthorized =
+    configService.get<boolean>('database.sslRejectUnauthorized') ?? false;
 
-  host: configService.get<string>('database.host'),
-  port: configService.get<number>('database.port'),
-  username: configService.get<string>('database.username'),
-  password: configService.get<string>('database.password'),
-  database: configService.get<string>('database.name'),
-  // Verify the server certificate (Neon and similar use publicly trusted CAs)
-  ssl: configService.get<boolean>('database.ssl')
-    ? { rejectUnauthorized: true }
-    : false,
+  const isNeon =
+    Boolean(host?.includes('neon.tech')) ||
+    Boolean(url?.includes('neon.tech')) ||
+    Boolean(url?.includes('sslmode=require'));
 
-  entities: [__dirname + '/../database/entities/*.entity{.ts,.js}'],
+  const sslEnabled = isNeon || ssl === true;
+  const sslOption = sslEnabled ? { rejectUnauthorized } : false;
 
-  migrations: [__dirname + '/../database/migrations/*{.ts,.js}'],
+  const baseConfig: TypeOrmModuleOptions = {
+    type: 'postgres',
+    ssl: sslOption,
+    entities: [__dirname + '/../database/entities/*.entity{.ts,.js}'],
+    migrations: [__dirname + '/../database/migrations/*{.ts,.js}'],
+    synchronize: false,
+    logging: false,
+  };
 
-  synchronize: false,
+  if (url) {
+    return {
+      ...baseConfig,
+      url,
+    };
+  }
 
-  logging: false,
-});
+  return {
+    ...baseConfig,
+    host: configService.get<string>('database.host'),
+    port: configService.get<number>('database.port'),
+    username: configService.get<string>('database.username'),
+    password: configService.get<string>('database.password'),
+    database: configService.get<string>('database.name'),
+  };
+};

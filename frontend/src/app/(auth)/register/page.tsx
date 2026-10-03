@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
+import { APP_DOMAIN } from "@/constants/app";
 import { authApi } from "@/lib/api/auth";
 import { useAuthStore } from "@/stores/auth-store";
 import { useWorkspaceStore } from "@/stores/workspace-store";
@@ -553,7 +554,7 @@ export default function RegisterPage() {
                           if (touched.email) validateField("email", e.target.value);
                         }}
                         onBlur={() => handleBlur("email")}
-                        placeholder="alex@brightlabs.com"
+                        placeholder="name@company.com"
                         required
                         className={`w-full h-10 px-3.5 bg-slate-50 dark:bg-[#08121f] border rounded-xl text-sm font-sans text-[#131b2e] dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all focus:outline-none focus:bg-white dark:focus:bg-[#08121f] ${
                           touched.email && errors.email
@@ -605,7 +606,7 @@ export default function RegisterPage() {
                       ) : (
                         workspaceName && (
                           <p className="text-[11px] text-slate-400 font-mono pl-1">
-                            URL: taskflow.app/{slug}
+                            URL: app.{APP_DOMAIN}/{slug}
                           </p>
                         )
                       )}

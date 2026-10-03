@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
+import { APP_VERSION } from "@/constants/app";
 import { authApi } from "@/lib/api/auth";
 import { useAuthStore } from "@/stores/auth-store";
 import {
@@ -231,7 +232,7 @@ export default function LoginPage() {
                   </h2>
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold bg-[#e2dfff] dark:bg-indigo-950/80 text-[#3525cd] dark:text-indigo-300">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#4F46E5] animate-pulse" />
-                    v2.8 live
+                    v{APP_VERSION} live
                   </span>
                 </div>
                 <p className="text-sm text-[#464555] dark:text-slate-400">

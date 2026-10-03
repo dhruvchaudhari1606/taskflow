@@ -6,8 +6,10 @@ import {
   UpdateWorkspacePayload,
 } from "@/lib/api/workspaces";
 import { useWorkspaceStore } from "@/stores/workspace-store";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
+import { Role, type User } from "@/types/common";
+import { useAuthStore } from "@/stores/auth-store";
 
 export const WORKSPACES_QUERY_KEY = ["workspaces"];
 
@@ -132,6 +134,40 @@ export function useWorkspaceMembers(workspaceId?: string) {
     },
     enabled: Boolean(workspaceId),
   });
+}
+
+/** Workspace members mapped to `User` objects, e.g. for assignee pickers. */
+export function useWorkspaceMemberOptions(workspaceId?: string): User[] {
+  const { data: members } = useWorkspaceMembers(workspaceId);
+  return useMemo(
+    () =>
+      (members || [])
+        .filter((m) => Boolean(m.user))
+        .map((m) => ({
+          id: m.user.id,
+          name:
+            m.user.name ||
+            `${m.user.first_name || ""} ${m.user.last_name || ""}`.trim() ||
+            m.user.email,
+          email: m.user.email,
+          avatarUrl: m.user.avatar_url ?? null,
+        })),
+    [members]
+  );
+}
+
+/** The signed-in user's role in a workspace, or null while it's unknown. */
+export function useCurrentWorkspaceRole(workspaceId?: string): Role | null {
+  const { data: members } = useWorkspaceMembers(workspaceId);
+  const currentUserId = useAuthStore((s) => s.user?.id);
+  return useMemo(() => {
+    if (!currentUserId) return null;
+    const membership = (members || []).find(
+      (m) => m.user_id === currentUserId || m.user?.id === currentUserId
+    );
+    const role = membership?.role?.toUpperCase();
+    return role && role in Role ? (role as Role) : null;
+  }, [members, currentUserId]);
 }
 
 export function useWorkspaceInvitations(workspaceId?: string) {

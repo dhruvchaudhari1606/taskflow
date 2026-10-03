@@ -183,6 +183,10 @@ export function useAddComment() {
       queryClient.invalidateQueries({
         queryKey: TASK_COMMENTS_QUERY_KEY(vars.taskId),
       });
+      // Task lists carry comment counts (Kanban cards, dashboard activity);
+      // the project isn't known here, so refresh every cached task list.
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["workspace-tasks"] });
       toast.success("Comment posted");
     },
     onError: (err: any) => {

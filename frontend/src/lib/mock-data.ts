@@ -3,7 +3,7 @@ import { Task, Project, User, Workspace, TaskStatus, Priority, ProjectStatus, Ro
 export const MOCK_CURRENT_USER: User = {
   id: "user-1",
   name: "Sarah Mitchell",
-  email: "sarah.mitchell@taskflow.io",
+  email: "sarah.mitchell@taskflow.test",
   avatarUrl: "/images/sarah-mitchell.jpg",
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-02-15T00:00:00.000Z",
@@ -14,7 +14,7 @@ export const MOCK_USERS: User[] = [
   {
     id: "user-2",
     name: "Alex Rivera",
-    email: "alex.rivera@taskflow.io",
+    email: "alex.rivera@taskflow.test",
     avatarUrl: null,
     createdAt: "2026-01-05T00:00:00.000Z",
     updatedAt: "2026-02-10T00:00:00.000Z",
@@ -22,7 +22,7 @@ export const MOCK_USERS: User[] = [
   {
     id: "user-3",
     name: "Elena Chen",
-    email: "elena.chen@taskflow.io",
+    email: "elena.chen@taskflow.test",
     avatarUrl: null,
     createdAt: "2026-01-10T00:00:00.000Z",
     updatedAt: "2026-02-12T00:00:00.000Z",
@@ -30,7 +30,7 @@ export const MOCK_USERS: User[] = [
   {
     id: "user-4",
     name: "David Kim",
-    email: "david.kim@taskflow.io",
+    email: "david.kim@taskflow.test",
     avatarUrl: null,
     createdAt: "2026-01-15T00:00:00.000Z",
     updatedAt: "2026-02-14T00:00:00.000Z",
@@ -38,7 +38,7 @@ export const MOCK_USERS: User[] = [
   {
     id: "user-5",
     name: "Marcus Vance",
-    email: "marcus.v@taskflow.io",
+    email: "marcus.v@taskflow.test",
     avatarUrl: null,
     createdAt: "2026-01-20T00:00:00.000Z",
     updatedAt: "2026-02-16T00:00:00.000Z",

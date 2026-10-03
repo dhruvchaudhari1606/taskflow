@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import {
   Building,
-  Shield,
   CreditCard,
   Trash2,
   Check,
@@ -14,13 +13,8 @@ import {
   Laptop,
   Copy,
   ExternalLink,
-  Globe,
-  Clock,
-  HardDrive,
   Users,
-  CheckCircle2,
   AlertTriangle,
-  Sparkles,
   Layers,
   FileDown,
 } from "lucide-react";
@@ -30,13 +24,30 @@ import {
   useWorkspaces,
   useUpdateWorkspace,
   useDeleteWorkspace,
+  useWorkspaceMembers,
+  useWorkspaceInvitations,
+  useCurrentWorkspaceRole,
 } from "@/features/workspace/hooks/use-workspaces";
+import { useProjects } from "@/features/projects/hooks/use-projects";
+import { RoleBadge } from "@/components/common/badge-status";
 import { MOCK_WORKSPACE } from "@/lib/mock-data";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { workspaceUrl, PLAN_SEAT_LIMIT } from "@/constants/app";
 
 export default function SettingsPage() {
   const { activeWorkspace } = useWorkspaces();
+  const { data: members = [] } = useWorkspaceMembers(activeWorkspace?.id);
+  const { data: invitations = [] } = useWorkspaceInvitations(activeWorkspace?.id);
+  const { data: projects = [] } = useProjects(activeWorkspace?.id);
+  const currentRole = useCurrentWorkspaceRole(activeWorkspace?.id);
+
+  // Real usage figures (same seat formula as the Team page: members + pending invites)
+  const seatsUsed = members.length + invitations.length;
+  const seatPercent = Math.min(Math.round((seatsUsed / PLAN_SEAT_LIMIT) * 100), 100);
+  const totalTasks = projects.reduce((sum, p) => sum + (p.taskCount ?? 0), 0);
+  const completedTasks = projects.reduce((sum, p) => sum + (p.completedTaskCount ?? 0), 0);
+  const taskPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
   const updateWorkspaceMutation = useUpdateWorkspace();
   const deleteWorkspaceMutation = useDeleteWorkspace();
 
@@ -109,7 +120,7 @@ export default function SettingsPage() {
   };
 
   const handleCopyUrl = () => {
-    const url = `https://app.taskflow.io/${workspaceSlug}`;
+    const url = workspaceUrl(workspaceSlug);
     navigator.clipboard.writeText(url);
     setCopied(true);
     toast.success("Workspace URL copied to clipboard!");
@@ -181,9 +192,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
               </div>
-              <span className="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-400 text-[10px] font-bold uppercase tracking-wider">
-                Admin
-              </span>
+              {currentRole && <RoleBadge role={currentRole} />}
             </div>
 
             <form onSubmit={handleSave} className="space-y-4">
@@ -233,7 +242,7 @@ export default function SettingsPage() {
                 </label>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 flex items-center px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900 text-slate-500 font-mono overflow-hidden">
-                    <span className="shrink-0 text-slate-400 select-none">https://app.taskflow.io/</span>
+                    <span className="shrink-0 text-slate-400 select-none">{workspaceUrl()}</span>
                     <input
                       type="text"
                       value={workspaceSlug}
@@ -348,7 +357,7 @@ export default function SettingsPage() {
                     Subscription & Resource Quotas
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Live team seat allocations, storage capacity, and billing cycle
+                    Live team seat allocations, task progress, and billing cycle
                   </p>
                 </div>
               </div>
@@ -369,7 +378,7 @@ export default function SettingsPage() {
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Next automated invoice scheduled for April 15, 2026.
+                  Billed annually per seat. Includes {PLAN_SEAT_LIMIT} seats.
                 </p>
               </div>
 
@@ -396,36 +405,40 @@ export default function SettingsPage() {
                     <span>Member Seats</span>
                   </span>
                   <span className="font-mono font-bold text-slate-900 dark:text-white">
-                    5 / 10 (50%)
+                    {seatsUsed} / {PLAN_SEAT_LIMIT} ({seatPercent}%)
                   </span>
                 </div>
                 <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
                   <div
                     className="bg-[#4F46E5] h-full rounded-full transition-all duration-500"
-                    style={{ width: "50%" }}
+                    style={{ width: `${seatPercent}%` }}
                   />
                 </div>
-                <p className="text-[10px] text-slate-400">5 available seats remaining on tier</p>
+                <p className="text-[10px] text-slate-400">
+                  {Math.max(PLAN_SEAT_LIMIT - seatsUsed, 0)} available seats remaining on tier
+                </p>
               </div>
 
-              {/* Cloud Storage */}
+              {/* Workspace task progress (real data, replaces a hard-coded storage meter) */}
               <div className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-900/40 space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                    <HardDrive className="w-3.5 h-3.5 text-sky-500" />
-                    <span>Cloud Storage</span>
+                    <Layers className="w-3.5 h-3.5 text-sky-500" />
+                    <span>Tasks Completed</span>
                   </span>
                   <span className="font-mono font-bold text-slate-900 dark:text-white">
-                    12.4 / 50 GB (24%)
+                    {completedTasks} / {totalTasks} ({taskPercent}%)
                   </span>
                 </div>
                 <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
                   <div
                     className="bg-sky-500 h-full rounded-full transition-all duration-500"
-                    style={{ width: "24.8%" }}
+                    style={{ width: `${taskPercent}%` }}
                   />
                 </div>
-                <p className="text-[10px] text-slate-400">37.6 GB high-speed edge cache free</p>
+                <p className="text-[10px] text-slate-400">
+                  Across {projects.length} {projects.length === 1 ? "project" : "projects"} in this workspace
+                </p>
               </div>
             </div>
           </div>

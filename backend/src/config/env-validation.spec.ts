@@ -96,4 +96,20 @@ describe('env-validation', () => {
       REDIS_KEY_PREFIX: 'custom:',
     });
   });
+
+  it('validates configuration when DATABASE_URL is provided without DB_HOST', () => {
+    const urlEnv = {
+      DATABASE_URL:
+        'postgresql://neondb_owner:secret@ep-pooler.neon.tech/taskflow?sslmode=require',
+      JWT_SECRET: 'super-secret-key-12345',
+    };
+
+    const validated = validateEnv(urlEnv);
+
+    expect(validated).toMatchObject({
+      DATABASE_URL:
+        'postgresql://neondb_owner:secret@ep-pooler.neon.tech/taskflow?sslmode=require',
+      DB_SSL_REJECT_UNAUTHORIZED: false,
+    });
+  });
 });

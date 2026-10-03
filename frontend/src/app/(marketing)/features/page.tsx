@@ -6,6 +6,7 @@ import { PublicHeader } from "@/components/layout/public-header";
 import { PublicFooter } from "@/components/layout/public-footer";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
+import { APP_DOMAIN } from "@/constants/app";
 import {
   Bolt,
   ShieldCheck,
@@ -515,7 +516,7 @@ export default function FeaturesPage() {
                         Alpha Operations
                       </div>
                       <div className="text-[10px] text-slate-400">
-                        taskflow.app/alpha-operations • 14 Members
+                        app.{APP_DOMAIN}/alpha-operations • 14 Members
                       </div>
                     </div>
                   </div>
@@ -534,7 +535,7 @@ export default function FeaturesPage() {
                         BrightLabs Core
                       </div>
                       <div className="text-[10px] text-slate-400">
-                        taskflow.app/brightlabs-core • 8 Members
+                        app.{APP_DOMAIN}/brightlabs-core • 8 Members
                       </div>
                     </div>
                   </div>

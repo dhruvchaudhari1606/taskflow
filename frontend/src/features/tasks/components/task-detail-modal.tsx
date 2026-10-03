@@ -3,36 +3,25 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   X,
-  Calendar,
-  User as UserIcon,
-  Tag,
   Trash2,
-  CheckCircle2,
   Clock,
   Send,
-  Sparkles,
-  AlertCircle,
   MessageSquare,
   Copy,
   Check,
   Edit2,
   Plus,
-  ChevronDown,
   Loader2,
-  Flame,
-  ArrowUpCircle,
-  Circle,
-  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/common/avatar";
-import { PriorityBadge, StatusBadge } from "@/components/common/badge-status";
 import { Task, TaskStatus, Priority, User, TaskComment } from "@/types/common";
 import { MOCK_CURRENT_USER, MOCK_USERS } from "@/lib/mock-data";
 import { useCurrentUser } from "@/features/auth/hooks/use-current-user";
 import { useTaskComments, useAddComment } from "@/features/tasks/hooks/use-tasks";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { statusFromColumnTitle, findColumnForTask } from "@/lib/task-status";
 
 interface TaskDetailModalProps {
   task: Task | null;
@@ -110,7 +99,7 @@ function createDemoComments(taskId: string): TaskComment[] {
       author: {
         id: "user-2",
         name: "Alex Rivera",
-        email: "alex.rivera@taskflow.io",
+        email: "alex.rivera@taskflow.test",
         avatarUrl: null,
       },
       createdAt: twoHoursAgo,
@@ -218,6 +207,13 @@ export function TaskDetailModal({
 
   if (!isOpen || !task) return null;
 
+  // Keep the current assignee selectable even if they're not in the member list
+  // (e.g. members still loading, or the assignee has left the workspace)
+  const assigneeOptions: User[] =
+    task.assignee && !members.some((m) => m.id === task.assignee?.id)
+      ? [task.assignee, ...members]
+      : members;
+
   // Title save
   const handleSaveTitle = () => {
     const trimmed = titleDraft.trim();
@@ -251,7 +247,9 @@ export function TaskDetailModal({
     const matchedCol = columns?.find(
       (c) => c.id === newStatusOrColumnId || c.title === newStatusOrColumnId
     );
-    const newStatus = matchedCol ? matchedCol.title : newStatusOrColumnId;
+    const newStatus = matchedCol
+      ? statusFromColumnTitle(matchedCol.title)
+      : newStatusOrColumnId;
     const newColumnId = matchedCol ? matchedCol.id : task.columnId;
 
     onUpdateTask?.({
@@ -285,15 +283,11 @@ export function TaskDetailModal({
       toast.success("Task unassigned");
       return;
     }
-    const member = members.find((m) => m.id === userId);
+    const member = assigneeOptions.find((m) => m.id === userId);
     onUpdateTask?.({
       ...task,
       assigneeId: userId,
-      assignee: member || {
-        id: userId,
-        name: "Team Member",
-        email: "member@taskflow.io",
-      },
+      assignee: member || { id: userId, name: "Team Member", email: "" },
       updatedAt: new Date().toISOString(),
     });
     toast.success(`Assigned to ${member?.name || "Team Member"}`);
@@ -412,7 +406,7 @@ export function TaskDetailModal({
         <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 border-b border-slate-100 dark:border-[#334155] bg-slate-50/50 dark:bg-slate-900/40">
           <div className="flex items-center gap-2.5 overflow-hidden">
             <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/40">
-              {task.id.length > 10 ? `#${task.id.slice(0, 8)}` : `#${task.id}`}
+              {task.key ?? (task.id.length > 10 ? `#${task.id.slice(0, 8)}` : `#${task.id}`)}
             </span>
             <span className="text-slate-300 dark:text-slate-700">•</span>
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">
@@ -787,13 +781,7 @@ export function TaskDetailModal({
               <select
                 value={
                   columns && columns.length > 0
-                    ? columns.find((c) => c.id === task.columnId)?.id ||
-                      columns.find(
-                        (c) =>
-                          c.title.toLowerCase() ===
-                          (task.status || "").toLowerCase()
-                      )?.id ||
-                      task.status
+                    ? findColumnForTask(columns, task)?.id || task.status
                     : task.status
                 }
                 onChange={(e) => handleStatusChange(e.target.value)}
@@ -846,12 +834,18 @@ export function TaskDetailModal({
                 className="w-full text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 shadow-2xs focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/40 cursor-pointer"
               >
                 <option value="unassigned">Unassigned</option>
-                {members.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.name} ({member.email})
+                {assigneeOptions.map((member) => (
+                  <option key={member.id} value={member.id} title={member.email || undefined}>
+                    {member.name}
                   </option>
                 ))}
               </select>
+              {/* Email on its own line, so it's never cut off inside the select box */}
+              {task.assignee?.email && (
+                <p className="text-[10px] text-slate-400 truncate pl-1" title={task.assignee.email}>
+                  {task.assignee.email}
+                </p>
+              )}
             </div>
 
             {/* Due Date Picker */}
@@ -899,11 +893,13 @@ export function TaskDetailModal({
                   />
                   <div className="truncate">
                     <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">
-                      {task.createdBy?.name || "Sarah Mitchell"}
+                      {task.createdBy?.name || "Unknown user"}
                     </span>
-                    <span className="text-[10px] text-slate-400 block truncate">
-                      {task.createdBy?.email || "sarah@northstar.io"}
-                    </span>
+                    {task.createdBy?.email && (
+                      <span className="text-[10px] text-slate-400 block truncate">
+                        {task.createdBy.email}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

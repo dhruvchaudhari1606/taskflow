@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { BoardColumn } from '@database/entities/board-column.entity';
 import { Project } from '@database/entities/project.entity';
 import { WorkspaceMember } from '@database/entities/workspace-member.entity';
@@ -13,13 +13,10 @@ import { Task } from '@database/entities/task.entity';
 import { CreateColumnDto } from './dto/create-column.dto';
 import { UpdateColumnDto } from './dto/update-column.dto';
 import { ReorderColumnsDto } from './dto/reorder-columns.dto';
-
-const DEFAULT_COLUMNS = [
-  { name: 'TODO', color: '#4F46E5', position: 1000 },
-  { name: 'In Progress', color: '#0891b2', position: 2000 },
-  { name: 'In Review', color: '#7c3aed', position: 3000 },
-  { name: 'Done', color: '#059669', position: 4000 },
-];
+import {
+  DEFAULT_BOARD_COLUMNS,
+  findColumnByStatus,
+} from '@common/utils/task-status.util';
 
 @Injectable()
 export class ProjectColumnsService {
@@ -68,7 +65,7 @@ export class ProjectColumnsService {
 
     // Auto-seed default columns if this project has no board columns yet
     if (columns.length === 0) {
-      const seeded = DEFAULT_COLUMNS.map((c) =>
+      const seeded = DEFAULT_BOARD_COLUMNS.map((c) =>
         this.columnRepo.create({
           project_id: projectId,
           name: c.name,
@@ -77,29 +74,37 @@ export class ProjectColumnsService {
         }),
       );
       columns = await this.columnRepo.save(seeded);
-
-      // Backfill existing tasks with column_id matching column name or status
-      const existingTasks = await this.taskRepo.find({
-        where: { project_id: projectId },
-      });
-
-      for (const task of existingTasks) {
-        if (!task.column_id) {
-          const matched = columns.find(
-            (col) =>
-              col.name.toUpperCase() === (task.status || '').toUpperCase() ||
-              col.name.replace(/\s+/g, '_').toUpperCase() ===
-                (task.status || '').toUpperCase(),
-          );
-          if (matched) {
-            task.column_id = matched.id;
-            await this.taskRepo.save(task);
-          }
-        }
-      }
     }
 
+    await this.linkUnassignedTasks(projectId, columns);
+
     return columns;
+  }
+
+  /**
+   * Attach tasks that have no column yet (e.g. seeded or created before the
+   * board existed) to the column matching their status. Runs on every board
+   * load, not only on first column creation, so no task is left unlinked.
+   */
+  private async linkUnassignedTasks(
+    projectId: string,
+    columns: BoardColumn[],
+  ): Promise<void> {
+    const unlinked = await this.taskRepo.find({
+      where: { project_id: projectId, column_id: IsNull() },
+    });
+    if (unlinked.length === 0) return;
+
+    const updates = unlinked.flatMap((task) => {
+      const matched = findColumnByStatus(columns, task.status);
+      if (!matched) return [];
+      task.column_id = matched.id;
+      return [task];
+    });
+
+    if (updates.length > 0) {
+      await this.taskRepo.save(updates);
+    }
   }
 
   async createColumn(

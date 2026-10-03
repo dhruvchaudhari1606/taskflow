@@ -6,6 +6,7 @@ import { PublicHeader } from "@/components/layout/public-header";
 import { PublicFooter } from "@/components/layout/public-footer";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
+import { APP_VERSION } from "@/constants/app";
 import {
   ArrowRight,
   Bolt,
@@ -87,7 +88,7 @@ export default function LandingPage() {
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#e2e7ff]/80 dark:bg-[#0d1c2d]/90 hover:bg-[#dae2fd] dark:hover:bg-[#132337] rounded-full shadow-sm text-[#3525cd] dark:text-indigo-300 mb-6 transition-colors cursor-pointer border border-[#c3c0ff]/50 dark:border-[#1e2d42]">
               <span className="w-2 h-2 rounded-full bg-[#4F46E5] dark:bg-indigo-400 animate-pulse" />
               <span className="text-xs font-semibold tracking-wide text-[#3525cd] dark:text-indigo-300">
-                TaskFlow 3.0 is live
+                TaskFlow v{APP_VERSION} is live
               </span>
               <span className="text-[#c7c4d8] dark:text-slate-600">•</span>
               <span className="text-xs text-[#464555] dark:text-slate-400">
@@ -934,13 +935,13 @@ export default function LandingPage() {
                           Sarah Mitchell
                         </div>
                         <div className="text-[11px] text-[#464555] dark:text-slate-400">
-                          sarah@northstar.io • Product Lead
+                          sarah.mitchell@taskflow.test • Product Lead
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-0.5 rounded-full bg-[#e2dfff] dark:bg-[#1e2d42] text-[#3525cd] dark:text-indigo-300 text-[10px] font-bold">
-                        Admin
+                        Owner
                       </span>
                       <span className="w-2 h-2 rounded-full bg-emerald-500" />
                     </div>
@@ -957,13 +958,13 @@ export default function LandingPage() {
                           Alex Rivera
                         </div>
                         <div className="text-[11px] text-[#464555] dark:text-slate-400">
-                          alex@brightlabs.com • VP Engineering
+                          alex.rivera@taskflow.test • VP Engineering
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded-full bg-[#dae2fd] dark:bg-[#1e2d42] text-[#464555] dark:text-slate-300 text-[10px] font-bold">
-                        Member
+                      <span className="px-2 py-0.5 rounded-full bg-[#e2dfff] dark:bg-[#1e2d42] text-[#3525cd] dark:text-indigo-300 text-[10px] font-bold">
+                        Admin
                       </span>
                       <span className="w-2 h-2 rounded-full bg-emerald-500" />
                     </div>
@@ -980,7 +981,7 @@ export default function LandingPage() {
                           Elena Chen
                         </div>
                         <div className="text-[11px] text-[#464555] dark:text-slate-400">
-                          elena@orbit.tech • Staff Designer
+                          elena.chen@taskflow.test • Staff Designer
                         </div>
                       </div>
                     </div>

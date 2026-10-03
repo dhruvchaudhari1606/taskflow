@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/common/avatar";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
+import { statusKey, statusFromColumnTitle, findColumnForTask } from "@/lib/task-status";
 import { toast } from "sonner";
 import {
   useProjectTasks,
@@ -48,6 +49,11 @@ import {
   useDeleteColumn,
   useReorderColumns,
 } from "@/features/tasks/hooks/use-tasks";
+import { useProject } from "@/features/projects/hooks/use-projects";
+import {
+  useWorkspaces,
+  useWorkspaceMemberOptions,
+} from "@/features/workspace/hooks/use-workspaces";
 
 interface ProjectMeta {
   id: string;
@@ -178,6 +184,13 @@ export function KanbanBoard({
     return Array.from(map.values());
   }, [tasks]);
 
+  // Full workspace member list (with emails) for the task detail assignee picker
+  const { activeWorkspace } = useWorkspaces();
+  const { data: projectData } = useProject(projectId);
+  const memberOptions = useWorkspaceMemberOptions(
+    projectData?.workspace_id || activeWorkspace?.id
+  );
+
   // Filtered tasks
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
@@ -220,12 +233,8 @@ export function KanbanBoard({
         map[t.status].push(t);
         return;
       }
-      // 3. Status matches column title (case-insensitive / enum format)
-      const matched = columns.find(
-        (col) =>
-          col.title.trim().toLowerCase() === (t.status || "").trim().toLowerCase() ||
-          col.title.replace(/\s+/g, "_").toUpperCase() === (t.status || "").toUpperCase()
-      );
+      // 3. Status matches column title ("To Do" ↔ "TODO", "In Progress" ↔ "IN_PROGRESS")
+      const matched = columns.find((col) => statusKey(col.title) === statusKey(t.status));
       if (matched && map[matched.id]) {
         map[matched.id].push(t);
         return;
@@ -344,7 +353,7 @@ export function KanbanBoard({
     if (overData && overData.type === "Column") {
       const targetColId = overData.status as string;
       const targetCol = columns.find((c) => c.id === targetColId);
-      const newStatus = targetCol ? targetCol.title : targetColId;
+      const newStatus = targetCol ? statusFromColumnTitle(targetCol.title) : targetColId;
 
       setTasks((prev) => {
         return prev.map((t) => {
@@ -402,11 +411,11 @@ export function KanbanBoard({
 
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(activeId);
 
-    const targetCol = columns.find(
-      (c) => c.id === activeTaskItem.columnId || c.title === activeTaskItem.status
-    );
+    const targetCol = findColumnForTask(columns, activeTaskItem);
     const finalColumnId = targetCol?.id || activeTaskItem.columnId || undefined;
-    const finalStatus = targetCol?.title || activeTaskItem.status;
+    const finalStatus = targetCol
+      ? statusFromColumnTitle(targetCol.title)
+      : activeTaskItem.status;
 
     if (activeId === overId) {
       if (isUUID) {
@@ -881,7 +890,7 @@ export function KanbanBoard({
         onClose={() => setSelectedTask(null)}
         onUpdateTask={handleUpdateTask}
         onDeleteTask={handleDeleteTask}
-        members={assignees.length > 0 ? (assignees as any) : undefined}
+        members={memberOptions}
         columns={columns}
       />
     </div>

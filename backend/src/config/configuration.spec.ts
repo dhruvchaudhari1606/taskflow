@@ -54,12 +54,14 @@ describe('configuration', () => {
         origin: 'http://localhost:3001',
       },
       database: {
+        url: undefined,
         host: 'db-host',
         port: 5433,
         username: 'postgres',
         password: 'secret',
         name: 'taskflow_staging',
         ssl: false,
+        sslRejectUnauthorized: false,
       },
       jwt: {
         secret: 'jwt-secret',
@@ -221,5 +223,36 @@ describe('configuration', () => {
       pass: 'app-password',
       from: 'from@gmail.com',
     });
+  });
+
+  it('enables database SSL automatically for Neon hosts', () => {
+    process.env = {
+      ...originalEnv,
+      DB_HOST:
+        'ep-broad-paper-azwdyr74-pooler.c-3.ap-southeast-1.aws.neon.tech',
+    };
+
+    expect(configuration().database.ssl).toBe(true);
+  });
+
+  it('enables database SSL automatically when DATABASE_URL contains sslmode=require', () => {
+    process.env = {
+      ...originalEnv,
+      DATABASE_URL: 'postgresql://user:pass@host:5432/taskflow?sslmode=require',
+    };
+
+    expect(configuration().database.ssl).toBe(true);
+    expect(configuration().database.url).toBe(
+      'postgresql://user:pass@host:5432/taskflow?sslmode=require',
+    );
+  });
+
+  it('sets sslRejectUnauthorized when DB_SSL_REJECT_UNAUTHORIZED is true', () => {
+    process.env = {
+      ...originalEnv,
+      DB_SSL_REJECT_UNAUTHORIZED: 'true',
+    };
+
+    expect(configuration().database.sslRejectUnauthorized).toBe(true);
   });
 });

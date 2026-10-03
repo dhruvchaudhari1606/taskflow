@@ -1,5 +1,6 @@
 import apiClient from "./client";
 import { Task, TaskStatus, Priority, TaskComment } from "@/types/common";
+import { statusFromColumnTitle } from "@/lib/task-status";
 
 export interface CreateTaskPayload {
   project_id: string;
@@ -32,13 +33,18 @@ export interface ReorderTaskPayload {
   column_id?: string;
 }
 
+// Shown when the API omits a reporter/author, instead of a made-up person
+const UNKNOWN_USER = { id: "", name: "Unknown user", email: "" };
+
 // Helper to normalize task entity to frontend structure
 export function normalizeTask(raw: any): Task {
   return {
     id: raw.id,
+    key: raw.task_key || raw.key || undefined,
     title: raw.title,
     description: raw.description ?? null,
-    status: (raw.status as TaskStatus) || TaskStatus.TODO,
+    // Normalize legacy title-format values ("In Progress") to the enum ("IN_PROGRESS")
+    status: raw.status ? statusFromColumnTitle(raw.status) : TaskStatus.TODO,
     columnId: raw.column_id || raw.columnId || null,
     priority: (raw.priority as Priority) || Priority.MEDIUM,
     dueDate: raw.due_date || raw.dueDate || null,
@@ -53,20 +59,26 @@ export function normalizeTask(raw: any): Task {
           avatarUrl: raw.assignee.avatar_url || raw.assignee.avatarUrl || null,
         }
       : null,
-    createdById: raw.reporter_id || raw.createdById || "user-1",
+    createdById: raw.reporter_id || raw.createdById || "",
     createdBy: raw.reporter
       ? {
           id: raw.reporter.id,
           name: raw.reporter.name || raw.reporter.email,
           email: raw.reporter.email,
         }
-      : { id: "user-1", name: "User", email: "user@example.com" },
+      : UNKNOWN_USER,
     labels: (raw.tags || []).map((tag: string, idx: number) => ({
       id: `tag-${idx}-${tag}`,
       name: tag,
       color: "#4F46E5",
       workspaceId: raw.project_id || "",
     })),
+    commentCount: Array.isArray(raw.comments)
+      ? raw.comments.length
+      : Number(raw.comment_count ?? raw.commentCount ?? 0),
+    comments: Array.isArray(raw.comments)
+      ? raw.comments.map(normalizeComment)
+      : undefined,
     createdAt: raw.created_at || raw.createdAt || new Date().toISOString(),
     updatedAt: raw.updated_at || raw.updatedAt || new Date().toISOString(),
   };
@@ -79,7 +91,7 @@ export function normalizeComment(raw: any): TaskComment {
     id: raw.id,
     content: raw.content || "",
     taskId: raw.task_id || raw.taskId,
-    authorId: raw.user_id || raw.authorId || (author ? author.id : "user-1"),
+    authorId: raw.user_id || raw.authorId || (author ? author.id : ""),
     author: author
       ? {
           id: author.id,
@@ -87,7 +99,7 @@ export function normalizeComment(raw: any): TaskComment {
           email: author.email || "",
           avatarUrl: author.avatar_url || author.avatarUrl || null,
         }
-      : { id: "user-1", name: "Sarah Mitchell", email: "sarah@northstar.io" },
+      : UNKNOWN_USER,
     createdAt: raw.created_at || raw.createdAt || new Date().toISOString(),
     updatedAt: raw.updated_at || raw.updatedAt || new Date().toISOString(),
   };

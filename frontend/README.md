@@ -92,13 +92,14 @@ Create `.env.local`:
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_VERSION=1.0.0   # optional: version shown on the landing and login pages
 ```
 
 ```bash
 npm run dev     # http://localhost:3000
 ```
 
-Sign in with a [demo account](../README.md#demo-accounts) such as `sarah@northstar.io` / `password123`.
+Sign in with a [demo account](../README.md#demo-accounts) such as `sarah.mitchell@taskflow.test` / `password123`.
 
 ## Scripts
 
@@ -118,6 +119,7 @@ The [`Dockerfile`](Dockerfile) builds the Next.js standalone server and runs it 
 docker build \
   --build-arg NEXT_PUBLIC_API_URL=https://api.example.com/api/v1 \
   --build-arg NEXT_PUBLIC_APP_URL=https://app.example.com \
+  --build-arg NEXT_PUBLIC_APP_VERSION=1.0.0 \
   -t taskflow-frontend .
 ```
 

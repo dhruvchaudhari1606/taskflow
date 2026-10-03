@@ -12,12 +12,26 @@ export const envValidationSchema: Joi.ObjectSchema<Record<string, unknown>> =
     CORS_ORIGIN: Joi.string().default('http://localhost:3001'),
 
     // DATABASE
-    DB_HOST: Joi.string().required(),
+    DATABASE_URL: Joi.string().allow('').optional(),
+    DB_HOST: Joi.string().when('DATABASE_URL', {
+      is: Joi.string().min(1).required(),
+      then: Joi.optional(),
+      otherwise: Joi.required(),
+    }),
     DB_PORT: Joi.number().port().default(5432),
-    DB_USER: Joi.string().required(),
+    DB_USER: Joi.string().when('DATABASE_URL', {
+      is: Joi.string().min(1).required(),
+      then: Joi.optional(),
+      otherwise: Joi.required(),
+    }),
     DB_PASSWORD: Joi.string().allow('').default(''),
-    DB_NAME: Joi.string().required(),
-    DB_SSL: Joi.boolean().default(false),
+    DB_NAME: Joi.string().when('DATABASE_URL', {
+      is: Joi.string().min(1).required(),
+      then: Joi.optional(),
+      otherwise: Joi.required(),
+    }),
+    DB_SSL: Joi.boolean().optional(),
+    DB_SSL_REJECT_UNAUTHORIZED: Joi.boolean().default(false),
 
     // REDIS
     REDIS_ENABLED: Joi.boolean().default(true),

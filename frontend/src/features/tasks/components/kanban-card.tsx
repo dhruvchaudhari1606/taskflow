@@ -5,9 +5,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
   Calendar,
-  CheckSquare,
   MessageSquare,
-  Paperclip,
   AlignLeft,
   GripVertical,
 } from "lucide-react";
@@ -99,10 +97,7 @@ export function KanbanCard({
     );
   };
 
-  // Subtask completion simulation (e.g. 4/4 or 1/8)
-  const subtasksTotal = (task.id.charCodeAt(task.id.length - 1) % 8) + 1;
-  const subtasksDone = (task.id.charCodeAt(0) % subtasksTotal);
-  const isSubtasksDone = subtasksTotal > 1 && subtasksDone === subtasksTotal;
+  const commentCount = task.commentCount ?? 0;
 
   return (
     <div
@@ -160,33 +155,14 @@ export function KanbanCard({
             </span>
           )}
 
-          {/* Subtasks counter (matching reference) */}
-          <span
-            className={cn(
-              "flex items-center gap-1 text-[10px] font-medium px-1 py-0.5 rounded",
-              isSubtasksDone
-                ? "bg-emerald-50 dark:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/40 font-bold"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-            )}
-            title="Subtasks progress"
-          >
-            <CheckSquare className="w-3 h-3" />
-            <span>
-              {subtasksDone}/{subtasksTotal}
-            </span>
-          </span>
-
-          {/* Comments count */}
-          <span className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">
-            <MessageSquare className="w-3 h-3 text-slate-400 dark:text-slate-500" />
-            <span>1</span>
-          </span>
-
-          {/* Attachments if any */}
-          {task.id.length % 2 === 0 && (
-            <span className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
-              <Paperclip className="w-3 h-3 text-slate-400 dark:text-slate-500" />
-              <span>1</span>
+          {/* Comments count (real data; hidden when there are none) */}
+          {commentCount > 0 && (
+            <span
+              className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+              title={`${commentCount} comment${commentCount === 1 ? "" : "s"}`}
+            >
+              <MessageSquare className="w-3 h-3 text-slate-400 dark:text-slate-500" />
+              <span>{commentCount}</span>
             </span>
           )}
         </div>

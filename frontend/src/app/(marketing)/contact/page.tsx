@@ -150,7 +150,7 @@ export default function ContactPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="elena@company.com"
+                    placeholder="name@company.com"
                     required
                     className="w-full h-10 px-3.5 bg-slate-50 dark:bg-[#08121f] border border-slate-200 dark:border-[#1e2d42] text-[#131b2e] dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#4F46E5] focus:bg-white dark:focus:bg-[#0d1c2d] transition-all font-sans"
                   />
@@ -311,10 +311,10 @@ export default function ContactPage() {
                   </p>
                   <div className="pt-1 flex items-center justify-between text-xs">
                     <span className="font-mono text-[#0051d5] dark:text-sky-400">
-                      sales@taskflow.example
+                      sales@taskflow.test
                     </span>
                     <a
-                      href="mailto:sales@taskflow.example"
+                      href="mailto:sales@taskflow.test"
                       className="text-[#4F46E5] dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1"
                     >
                       Schedule Demo <ExternalLink className="w-3 h-3" />
@@ -339,7 +339,7 @@ export default function ContactPage() {
                   </p>
                   <div className="pt-1 flex items-center justify-between text-xs">
                     <span className="font-mono text-[#0051d5] dark:text-sky-400">
-                      support@taskflow.example
+                      support@taskflow.test
                     </span>
                     <span className="text-[#0051d5] dark:text-sky-400 font-semibold cursor-pointer hover:underline flex items-center gap-1">
                       Ticket Portal <ExternalLink className="w-3 h-3" />
@@ -358,7 +358,7 @@ export default function ContactPage() {
                   </p>
                   <div className="pt-1 flex items-center justify-between text-xs">
                     <span className="font-mono text-[#464555] dark:text-slate-400">
-                      press@taskflow.example
+                      press@taskflow.test
                     </span>
                     <span className="text-[#4F46E5] dark:text-indigo-400 font-semibold cursor-pointer hover:underline">
                       Brand Assets

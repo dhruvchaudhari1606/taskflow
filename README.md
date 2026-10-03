@@ -91,13 +91,17 @@ PostgreSQL and Redis are not published to the host, so they won't clash with loc
 
 ## Demo accounts
 
-The seed script creates a sample workspace (**Alpha Operations**) with projects, board columns and tasks:
+The seed script creates a sample workspace (**Alpha Operations**) with two projects, board columns, tasks and task comments:
 
-| User | Email | Password |
-| :-- | :-- | :-- |
-| Sarah Mitchell (workspace owner) | `sarah@northstar.io` | `password123` |
-| Alex Rivera | `alex@brightlabs.com` | `password123` |
-| Elena Chen | `elena@design.io` | `password123` |
+| User | Workspace role | Email | Password |
+| :-- | :-- | :-- | :-- |
+| Sarah Mitchell | Owner | `sarah.mitchell@taskflow.test` | `password123` |
+| Alex Rivera | Admin | `alex.rivera@taskflow.test` | `password123` |
+| Elena Chen | Member | `elena.chen@taskflow.test` | `password123` |
+
+Sign in as different users to see role-based access (owners and admins can invite members and manage the workspace).
+
+> Demo addresses use the reserved `.test` domain, so invitation or verification emails sent to them can never reach a real mailbox. The seed is idempotent, and databases seeded with the older demo addresses are migrated in place on the next run. These accounts share a public password, so set `SEED_DEMO_DATA=false` for any deployment that is not a demo.
 
 New sign-ups are verified with a 6-digit email OTP. If no mail provider is configured, the code is printed to the backend logs (`docker compose logs backend`).
 
@@ -123,6 +127,7 @@ cd frontend
 npm install
 echo "NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1" >  .env.local
 echo "NEXT_PUBLIC_APP_URL=http://localhost:3000"       >> .env.local
+echo "NEXT_PUBLIC_APP_VERSION=1.0.0"                  >> .env.local
 npm run dev
 ```
 
@@ -171,6 +176,7 @@ Migrations run automatically every time the container starts.
 ```env
 NEXT_PUBLIC_API_URL=https://<your-app>.vercel.app/api/v1
 NEXT_PUBLIC_APP_URL=https://<your-app>.vercel.app
+NEXT_PUBLIC_APP_VERSION=1.0.0   # optional: version shown in the UI
 API_PROXY_TARGET=https://<backend>.onrender.com
 ```
 

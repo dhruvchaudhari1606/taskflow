@@ -103,7 +103,7 @@ export default function ProjectsPage() {
   const currentWorkspaceName = activeWorkspace?.name || "Workspace";
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12 w-full max-w-7xl mx-auto">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

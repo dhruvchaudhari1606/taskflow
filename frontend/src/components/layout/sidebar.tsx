@@ -28,6 +28,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useCurrentUser } from "@/features/auth/hooks/use-current-user";
 import { useWorkspaces, useCreateWorkspace } from "@/features/workspace/hooks/use-workspaces";
 import { useProjects } from "@/features/projects/hooks/use-projects";
+import { pickFeaturedProject, projectProgress } from "@/features/projects/utils";
 
 interface SidebarProps {
   pinned?: boolean;
@@ -121,8 +122,9 @@ export function Sidebar({
     );
   };
 
-  // Active project for bottom widget
-  const activeProject = projects[0];
+  // Featured project for the bottom widget (busiest project, with real progress)
+  const activeProject = pickFeaturedProject(projects);
+  const activeProgress = activeProject ? projectProgress(activeProject) : 0;
 
   const navItems: NavItem[] = [
     {
@@ -326,7 +328,11 @@ export function Sidebar({
       <div className="p-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
         {/* Project Target Widget */}
         {activeProject && (
-          <div className="p-3 rounded-xl bg-[#faf8ff] dark:bg-[#0f172a] border border-slate-100 dark:border-[#334155] space-y-2">
+          <Link
+            href={ROUTES.project(activeProject.id)}
+            title={`Open ${activeProject.name} board`}
+            className="block p-3 rounded-xl bg-[#faf8ff] dark:bg-[#0f172a] border border-slate-100 dark:border-[#334155] hover:border-[#4F46E5]/50 transition-colors space-y-2"
+          >
             <div className="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-[#f8fafc]">
               <span className="flex items-center gap-1.5 truncate">
                 <Sparkles className="w-3.5 h-3.5 text-[#4F46E5] dark:text-[#818cf8] shrink-0" />
@@ -339,14 +345,18 @@ export function Sidebar({
             <div className="w-full bg-slate-200 dark:bg-[#334155] h-1.5 rounded-full overflow-hidden">
               <div
                 className="bg-[#4F46E5] dark:bg-[#818cf8] h-full rounded-full transition-all duration-500"
-                style={{ width: "65%" }}
+                style={{ width: `${activeProgress}%` }}
               />
             </div>
             <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-[#94a3b8]">
-              <span>Active Roadmap</span>
-              <span className="font-semibold text-emerald-600 dark:text-emerald-400">On Track</span>
+              <span>
+                {activeProject.completedTaskCount ?? 0} / {activeProject.taskCount ?? 0} tasks done
+              </span>
+              <span className="font-semibold text-[#4F46E5] dark:text-[#818cf8]">
+                {activeProgress}%
+              </span>
             </div>
-          </div>
+          </Link>
         )}
 
         {/* User Account / Sign Out */}
@@ -364,7 +374,7 @@ export function Sidebar({
                 {user?.name || activeWorkspace?.name || "Authenticated User"}
               </p>
               <p className="text-[11px] text-slate-500 dark:text-[#94a3b8] truncate">
-                {user?.email || "team@taskflow.app"}
+                {user?.email || "team@taskflow.test"}
               </p>
             </div>
           </div>

@@ -23,6 +23,7 @@ import { Avatar } from "@/components/common/avatar";
 import { RoleBadge } from "@/components/common/badge-status";
 import { MOCK_USERS, MOCK_WORKSPACE } from "@/lib/mock-data";
 import { Role } from "@/types/common";
+import { PLAN_SEAT_LIMIT } from "@/constants/app";
 import {
   useWorkspaces,
   useWorkspaceDetails,
@@ -93,7 +94,7 @@ export default function TeamPage() {
         {
           id: "user-1",
           name: "Sarah Mitchell",
-          email: "sarah.mitchell@taskflow.io",
+          email: "sarah.mitchell@taskflow.test",
           role: Role.OWNER,
           status: "Active",
           avatarUrl: MOCK_USERS[0].avatarUrl,
@@ -101,7 +102,7 @@ export default function TeamPage() {
         {
           id: "user-2",
           name: "Alex Rivera",
-          email: "alex.rivera@taskflow.io",
+          email: "alex.rivera@taskflow.test",
           role: Role.ADMIN,
           status: "Active",
           avatarUrl: null,
@@ -160,7 +161,7 @@ export default function TeamPage() {
   };
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12 w-full max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -198,7 +199,7 @@ export default function TeamPage() {
               Growth Plan Seats
             </h3>
             <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-              {members.length + invitationsData.length} of 10 Seats Used
+              {members.length + invitationsData.length} of {PLAN_SEAT_LIMIT} Seats Used
             </span>
           </div>
           <p className="text-xs text-slate-500">
@@ -214,14 +215,14 @@ export default function TeamPage() {
               className="bg-[#4F46E5] h-full rounded-full transition-all duration-300"
               style={{
                 width: `${Math.min(
-                  ((members.length + invitationsData.length) / 10) * 100,
+                  ((members.length + invitationsData.length) / PLAN_SEAT_LIMIT) * 100,
                   100
                 )}%`,
               }}
             />
           </div>
           <p className="text-[10px] text-slate-400 text-right font-semibold">
-            {Math.max(10 - (members.length + invitationsData.length), 0)} seats available
+            {Math.max(PLAN_SEAT_LIMIT - (members.length + invitationsData.length), 0)} seats available
           </p>
         </div>
       </div>
@@ -533,7 +534,7 @@ export default function TeamPage() {
                   <input
                     type="email"
                     required
-                    placeholder="dhruvtestcheckpoint@yopmail.com"
+                    placeholder="name@company.com"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/40"

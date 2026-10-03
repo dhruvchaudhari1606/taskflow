@@ -84,6 +84,8 @@ export interface Label {
 
 export interface Task {
   id: string;
+  /** Human-readable key, e.g. "EXEC-9" */
+  key?: string;
   title: string;
   description?: string | null;
   status: TaskStatus | string;
@@ -97,6 +99,10 @@ export interface Task {
   createdById: string;
   createdBy: User;
   labels: Label[];
+  /** Number of comments on the task, derived from the API's comments relation */
+  commentCount?: number;
+  /** Comments included with list responses (used for activity feeds) */
+  comments?: TaskComment[];
   createdAt: string;
   updatedAt: string;
 }
